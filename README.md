@@ -4,6 +4,8 @@
 
 > this repo currently is under development using [ python 3.10 ](https://www.python.org/downloads/release/python-31016/) and [ numpy version 1.26.4 ](https://numpy.org/devdocs/release/1.26.4-notes.html)
 
+
+
 ## Motivations
 
 * I've been coding EXHAUSTIVELY in python, and 've been using numpy since day-1.
@@ -24,6 +26,12 @@ found single person doing this kinda thing
 which where He tried to reading [ Alembic ](.http://www.alembic.io/) interchange file format for his
 works and his team in [ JangaFX ](https://jangafx.com/) and try to read it in
 [ Odin ](https://odin-lang.org/)
+
+* the Numpy Enhancement Proposal (NEP), [NEP 1 — A simple file format for NumPy arrays](https://numpy.org/neps/nep-0001-npy-format.html)
+
+    > _We propose a standard binary file format (NPY) for persisting a single arbitrary NumPy array on disk. The format stores all of the shape and dtype information necessary to reconstruct the array correctly even on another machine with a different architecture. The format is designed to be as simple as possible while achieving its limited goals. The implementation is intended to be pure Python and distributed as part of the main numpy package._
+    >
+    > **Kern, R. (2007)**
 
 lastly, i want to thank to numpy teams, Bill, G. and Rickard Andersson.
 i've been watching Rickard's vidoes about Odin in his YouTube to figure out things
