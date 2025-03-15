@@ -3,9 +3,6 @@
 [Python]( https://www.python.org/ )-[ Numpy ](https://github.com/numpy/numpy) `.npy` file reader in [ Odin ](https://odin-lang.org/)
 
 > this repo currently is under development using [ python 3.10 ](https://www.python.org/downloads/release/python-31016/) and [ numpy version 1.26.4 ](https://numpy.org/devdocs/release/1.26.4-notes.html)
-
-
-
 ## Motivations
 
 * I've been coding EXHAUSTIVELY in python, and 've been using numpy since day-1.
@@ -33,7 +30,7 @@ works and his team in [ JangaFX ](https://jangafx.com/) and try to read it in
     >
     > **Kern, R. (2007)**
 
-lastly, i want to thank to numpy teams, Bill, G. and Rickard Andersson.
+lastly, i want to thank to numpy teams, Ginger Bill, and Rickard Andersson.
 i've been watching Rickard's vidoes about Odin in his YouTube to figure out things
 to be able to do some parts of this repo. i definitley would recommend you to
 check Rickard's vidoes here: [Rick's YouTube](https://www.youtube.com/@mccGoNZooo)
