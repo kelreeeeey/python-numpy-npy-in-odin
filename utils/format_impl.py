@@ -1,3 +1,5 @@
+# source: https://github.com/numpy/numpy/blob/82610b4edaf474895a9f4b3ecc0749c7c297099a/numpy/lib/_format_impl.py#L704
+
 """
 Binary serialization
 
@@ -165,7 +167,11 @@ import io
 import os
 import pickle
 import warnings
-from rich import print
+try:
+    from rich import print
+except ModuleNotFoundError:
+    pass
+
 
 import numpy
 import numpy as np

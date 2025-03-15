@@ -1,4 +1,8 @@
-from rich import print
+try:
+    from rich import print
+except ModuleNotFoundError:
+    pass
+
 import argparse
 import format_impl as format
 from pathlib import Path
@@ -45,20 +49,10 @@ def load_in(file: str) -> None:
 
 def main() -> None:
     if args.d == "" and args.dir == "":
-        load_in(file="./arrayf64_1.npy")
-        load_in(file="./arrayf64_5.npy")
-        load_in(file="./arrayb_5.npy")
-        # load_in(file="./arrayf32_5.npy")
-        load_in(file="./arrayuint8_5.npy")
-        # load_in(file="./arrayint_5.npy")
-        # load_in(file="./arrayf16_5.npy")
-        # load_in(file="./arrayint16_5.npy")
-        # load_in(file="./arrayint32_5.npy")
-        # load_in(file="./arrayint64_5.npy")
-        # load_in(file="./arrayf64_5x5.npy")
-        # load_in(file="./arrayint_5x5.npy")
-        # load_in(file="./arrayf64_5x5x5.npy")
-        # load_in(file="./arrayf64_25x25x100.npy")
+        load_in(file="./test_data/ints/byte_5.npy")
+        load_in(file="./test_data/ints/int32_5x5.npy")
+        load_in(file="./test_data/floats/cdouble_5.npy")
+        load_in(file="./test_data/floats/float64_5x5.npy")
 
     elif args.d != "" and args.dir == "":
         load_in(file=args.d)
@@ -69,7 +63,10 @@ def main() -> None:
             print("Dir is not exist")
             return None
         for file in dir.iterdir():
-            load_in(file=file)
+            if file.name.endswith('.npy'):
+                load_in(file=file)
+            else:
+                print(f"file {file.name} is not supported for now")
 
     return None
 

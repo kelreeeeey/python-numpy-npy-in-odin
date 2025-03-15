@@ -53,6 +53,90 @@ what and how we can recreate the array
 2. i'll do some basic 1D arrays and 2D arrays.
 3. after the reconstructions, it'll be nice to save it back as `.npy` file too!.
 
+## Workflow
+
+make sure you have numpy 1.26.4 are installed for reproducibility purpose
+to check your numpy's version
+
+```bash
+python -m pip show numpy
+```
+
+### Generate test data
+
+in root dir run [ `./generate_array.py` ](./generate_array.py) to make test data
+make sure subdirs `./test_data/ints` and `./test_data/floats/` exist
+
+```bash
+mkdir test_data
+mkdir test_data/ints test_data/floats
+py -3.10 generate_array
+
+```
+
+### Peek inside the `.npy` files
+
+i have utilities to do that in [`/dirty.py`](./utils/dirty.py) which i copied and modified
+from numpy's [ `_fromat_impl.py` ](https://github.com/numpy/numpy/blob/82610b4edaf474895a9f4b3ecc0749c7c297099a/numpy/lib/_format_impl.py#L704) thatput [here](./utils/format_impl.py)
+
+after you created the test data, you can run [`dirty.py`](./utils/dirty.py) and pass a single numpy file or a directory contains `.npy` files
+
+```bash
+py -3.10 ./utils/dirty.py --d=./test_data/ints/b_5x5.npy
+```
+
+```bash
+py -3.10 ./utils/dirty.py --dir=./test_data/floats/
+```
+
+if everything is allright, you'll get something like following
+
+```raw
+
+begin file test_data/ints/b_5x5.npy
+
+inside func='load in open contextlib: fid': args=(<class '_io.BufferedReader'>,)
+b'\x93NUMPY' b'\x93NUMPY' True
+inside func='_read_bytes': args=(' reading `r` 0 times', b'\x93NUMPY\x01\x00')
+inside func='read_array version': args=((1, 0),)
+inside func='_read_array_header _hinfo': args=(('<H', 'latin1'),)
+inside func='_read_array_header hlength_type': args=('<H',)
+inside func='_read_array_header encoding': args=('latin1',)
+inside func='_read_bytes': args=(' reading `r` 0 times', b'v\x00')
+inside func='_read_array_header hlength_str': args=(b'v\x00',)
+inside func='_read_array_header header_length': args=((118,),)
+inside func='_read_bytes': args=(' reading `r` 0 times', b"{'descr': '|b1', 'fortran_order': False, 'shape': (5, 5), }                                                    
+\n")
+inside func='_read_array_header header': args=(b"{'descr': '|b1', 'fortran_order': False, 'shape': (5, 5), }                                                          
+\n",)
+inside func='_read_array_header header': args=("{'descr': '|b1', 'fortran_order': False, 'shape': (5, 5), }                                                          \n",)
+inside func='_read_array_header d': args=({'descr': '|b1', 'fortran_order': False, 'shape': (5, 5)},)
+inside func='read_array shape': args=((5, 5),)
+inside func='read_array fortran_order': args=(False,)
+inside func='read_array dtype': args=(dtype('bool'),)
+inside func='read_array count shape!=0': args=(25,)
+inside func='read_array fp isfileobj': args=(<_io.BufferedReader name='test_data/ints/b_5x5.npy'>,)
+inside func="load in open contextlib: data  <class 'numpy.ndarray'>": args=(array([[ True, False,  True, False,  True],
+       [ True, False,  True, False,  True],
+       [ True, False,  True, False,  True],
+       [ True, False,  True, False,  True],
+       [ True, False,  True, False,  True]]),)
+inside func='load in open: f': args=(<class '_io.BufferedReader'>,)
+<_io.BufferedReader name='test_data/ints/b_5x5.npy'>
+
+end file test_data/ints/b_5x5.npy
+```
+
+_I use [rich](https://github.com/Textualize/rich) for better color and readibility, it's just preference_
+
+Example output of 1 `.npy` file
+
+![Example output of 1 `.npy` file](./assets/dirty_1_input_npy.png)
+
+Example output of 1 folder
+
+![Example output of 1 folder](./assets/dirty_1_input_folders.png)
+
 ## TL;DR, 
 
 ### Numpy (v1.26.4) DataTypes
@@ -60,7 +144,7 @@ what and how we can recreate the array
 source: [Numpy Data Types](https://numpy.org/doc/1.26/user/basics.types.html)
 #### Bool, Byte, and Integer
 
-| Numpy Type | `npy` File Header |
+| Numpy Type | Type in `npy` File Header |
 | -------------- | --------------- |
 | byte | `\|i1` |
 | b | `\|b1` |
@@ -80,7 +164,7 @@ source: [Numpy Data Types](https://numpy.org/doc/1.26/user/basics.types.html)
 
 #### Floats
 
-| Numpy Type | `npy` File Header |
+| Numpy Type | Type in `npy` File Header |
 | -------------- | --------------- |
 | cdouble | `<c16` |
 | clongdouble | `<c16` |
