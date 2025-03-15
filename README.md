@@ -8,18 +8,22 @@
 
 * I've been coding EXHAUSTIVELY in python, and 've been using numpy since day-1.
 
-* i ain't trying to combine python and odin in a complicated things.
+* i ain't trying to combine python and odin in a complicated way, but anyway.
 
-* leave the lovely filthy snake alone.
+* i'll leave the lovely filthy snake alone as the way it is.
 
-* leave the almighty odin alone.
+* i'll leave the almighty odin alone as the way it is.
 
-* being able to utilized the output from those 2 languages would be great, right?, esp large data, like `.npy` files.
+* being able to utilized the output from those 2 languages would be great, right?,
+esp large data, like `.npy` files.
 
-* as far as my ability to surfing and searching through the internet, i haven't found single person doing this kinda thing
+* as far as my ability to surfing and searching through the internet, i haven't
+found single person doing this kinda thing
 
 * inspired by Bill, G.. He wrote about [ "Reverse Engineering Alembic" ](https://www.gingerbill.org/article/2022/07/11/reverse-engineering-alembic/)
-which where He tried to reading [ Alembic ](.http://www.alembic.io/) interchange file format for his works and his team in [ JangaFX ](https://jangafx.com/) and try to read it in [ Odin ](https://odin-lang.org/)
+which where He tried to reading [ Alembic ](.http://www.alembic.io/) interchange file format for his
+works and his team in [ JangaFX ](https://jangafx.com/) and try to read it in
+[ Odin ](https://odin-lang.org/)
 
 lastly, i want to thank to numpy teams, Bill, G. and Rickard Andersson.
 i've been watching Rickard's vidoes about Odin in his YouTube to figure out things
@@ -79,7 +83,8 @@ py -3.10 generate_array
 i have utilities to do that in [`/dirty.py`](./utils/dirty.py) which i copied and modified
 from numpy's [ `_fromat_impl.py` ](https://github.com/numpy/numpy/blob/82610b4edaf474895a9f4b3ecc0749c7c297099a/numpy/lib/_format_impl.py#L704) thatput [here](./utils/format_impl.py)
 
-after you created the test data, you can run [`dirty.py`](./utils/dirty.py) and pass a single numpy file or a directory contains `.npy` files
+after you created the test data, you can run [`dirty.py`](./utils/dirty.py) and
+pass a single numpy file or a directory contains `.npy` files
 
 ```bash
 py -3.10 ./utils/dirty.py --d=./test_data/ints/b_5x5.npy
@@ -142,6 +147,10 @@ Example output of 1 folder
 ### Numpy (v1.26.4) DataTypes
 
 source: [Numpy Data Types](https://numpy.org/doc/1.26/user/basics.types.html)
+
+Here's some cleaned output i awk-ed my way through from the outputs of
+[`dirty.py`](./utils/dirty.py) 
+
 #### Bool, Byte, and Integer
 
 | Numpy Type | Type in `npy` File Header |
