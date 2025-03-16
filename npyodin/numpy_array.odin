@@ -85,17 +85,83 @@ NumpyHeader :: struct #packed {
     header: Descriptor,
 }
 
+delete_header :: proc(h: ^NumpyHeader) {
+    delete (h.magic)
+    delete (h.header.shape)
+    delete (h.header.descr)
+}
+
+Array_b8 :: []b8
+Array_u8 :: []u8
+Array_i8 :: []i8
+
+Array_i16 :: []i16
+Array_u16 :: []u16
+
+Array_i32 :: []i32
+Array_u32 :: []u32
+
+Array_i64 :: []i64
+Array_u64 :: []u64
+
+Array_f16 :: []f16
+Array_f32 :: []f32
+Array_f64 :: []f64
+Array_f16be :: []f16be
+Array_f16le :: []f16le
+
+ArrayTypes :: union {
+    Array_b8,
+    Array_u8,
+    Array_i8,
+    Array_i16,
+    Array_u16,
+    Array_i32,
+    Array_u32,
+    Array_i64,
+    Array_u64,
+    Array_f16,
+    Array_f32,
+    Array_f64,
+    Array_f16be,
+    Array_f16le,
+}
+
+delete_ndarray :: proc(nd: ^NDArray) {
+    switch arr in nd.data {
+    case Array_b8:    delete(arr)
+    case Array_u8:    delete(arr)
+    case Array_i8:    delete(arr)
+    case Array_i16:   delete(arr)
+    case Array_u16:   delete(arr)
+    case Array_i32:   delete(arr)
+    case Array_u32:   delete(arr)
+    case Array_i64:   delete(arr)
+    case Array_u64:   delete(arr)
+    case Array_f16:   delete(arr)
+    case Array_f32:   delete(arr)
+    case Array_f64:   delete(arr)
+    case Array_f16be: delete(arr)
+    case Array_f16le: delete(arr)
+    }
+}
+NDArray :: struct {
+    data : ArrayTypes,
+    size : int,
+    length : u64
+}
+
 decode_npfile :: proc(
     file_name: string,
     bufreader_size: int,
     allocator:= context.allocator) -> (
 
     header: NumpyHeader,
-    lines:  []byte,
+    lines:  NDArray,
     error: ReadFileError ) {
 
-    fmt.printfln("indise decoder | trying to read %v", file_name)
-
+    //fmt.printfln("indise decoder | trying to read %v", file_name)
+    //
     // create an handler
     handle, open_error := os.open(file_name, os.O_RDONLY)
     if open_error != os.ERROR_NONE {
@@ -133,7 +199,7 @@ decode_npfile :: proc(
     clone_err : mem.Allocator_Error
     header.magic, clone_err = strings.clone_from_bytes(magic[:])
     if clone_err != nil {
-        return header, nil, nil
+        return header, lines, nil
     }
 
     { // read version
@@ -173,34 +239,301 @@ decode_npfile :: proc(
 
     header.header = parsed_header
 
-    prod_shape : int = 1
-    for i in 0..<len(header.header.shape) {
-        prod_shape *= header.header.shape[i]
+    _lines := recreate_array(&header, &bufio_reader, &lines, allocator = allocator)
+    if _lines == nil {
+        fmt.printfln("Out of recreate array: %v", _lines)
+        return header, lines, nil
     }
 
-    _lines := make([dynamic][]byte, 0, 0, allocator)
+    lines.data = _lines
 
-    data, read_bytes_err := bufio.reader_read_bytes(&bufio_reader, ' ')
+    return header, lines, nil
+}
+
+recreate_array :: proc(
+    header: ^NumpyHeader,
+    reader: ^bufio.Reader,
+    ndarray : ^NDArray,
+    allocator := context.allocator ) -> ArrayTypes {
+
+    data, read_bytes_err := bufio.reader_read_bytes(reader, '\n', allocator)
+    defer delete(data)
     n_elem := len(data)
 
-    n_data_from_shape : int = 1
-    for shp in header.header.shape {
-        n_data_from_shape *= shp
+    switch header.header.descr[1:] {
+
+        case "b1" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]b8)
+            for i := 0; i <n_elem; i += 1 { append(&_lines, cast(b8)data[i])}
+            return _lines[:]
+
+        case "u1" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]i8)
+            for i := 0; i <n_elem; i += 1 { append(&_lines, cast(i8)data[i])}
+            return _lines[:]
+
+        case "i1" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]i8)
+            for i := 0; i <n_elem; i += 1 { append(&_lines, cast(i8)data[i])}
+            return _lines[:]
+
+        case "i2" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]i16)
+            for i := 0; i <n_elem; i += size {
+                casted_data, cast_ok := endian.get_i16(data[i:i+size], header.header.endianess)
+                append(&_lines, cast(i16)casted_data)
+            }
+            return _lines[:]
+
+        case "u2" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]u16)
+            for i := 0; i <n_elem; i += size {
+                casted_data, cast_ok := endian.get_u16(data[i:i+size], header.header.endianess)
+                append(&_lines, cast(u16)casted_data)
+            }
+            return _lines[:]
+
+        case "u4" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]u32)
+            for i := 0; i <n_elem; i += size {
+                casted_data, cast_ok := endian.get_u32(data[i:i+size], header.header.endianess)
+                append(&_lines, casted_data)
+            }
+            return _lines[:]
+
+        case "i4" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]i32)
+            for i := 0; i <n_elem; i += size {
+                casted_data, cast_ok := endian.get_i32(data[i:i+size], header.header.endianess)
+                append(&_lines, casted_data)
+            }
+            return _lines[:]
+
+        case "u8" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]u16)
+            for i := 0; i <n_elem; i += size {
+                casted_data, cast_ok := endian.get_u16(data[i:i+size], header.header.endianess)
+                append(&_lines, casted_data)
+            }
+            return _lines[:]
+
+        case "i8" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]i64)
+            for i := 0; i <n_elem; i += size {
+                casted_data, cast_ok := endian.get_i64(data[i:i+size], header.header.endianess)
+                append(&_lines, casted_data)
+            }
+            return _lines[:]
+
+        case "f2" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]f16)
+            for i := 0; i <n_elem; i += size {
+                casted_data, cast_ok := endian.get_f16(data[i:i+size], header.header.endianess)
+                append(&_lines, casted_data)
+            }
+            return _lines[:]
+
+        case "c8" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]f32)
+            for i := 0; i <n_elem; i += size {
+                casted_data, cast_ok := endian.get_f32(data[i:i+size], header.header.endianess)
+                append(&_lines, cast(f32)casted_data)
+            }
+            return _lines[:]
+
+        case "c16" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+
+            size := 16
+            ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            count_elems := 0
+            //fmt.printfln("size: %v, length: %v", size, n_data_from_shape)
+            if header.header.endianess == .Little {
+                _lines := make([dynamic]f64)
+                i : int
+                for i := 0; i <n_elem-(size/2); i += size {
+                    casted_data, cast_ok := endian.get_f64(data[i:i+size], header.header.endianess)
+                    //fmt.printfln(
+                    //    "count: %v,%v | data: %v | c16: %v",
+                    //    count_elems, i,
+                    //    intrinsics.unaligned_load( (^u64)(raw_data(data[i:i+size]))),
+                    //    casted_data, )
+                    count_elems += 1
+                    append(&_lines, cast(f64)casted_data)
+                }
+                return _lines[:]
+            } else {
+                _lines := make([dynamic]f64)
+                i : int
+                for i := 0; i <n_elem-(size/2); i += size {
+                    casted_data, cast_ok := endian.get_f64(data[i:i+size], header.header.endianess)
+                    //fmt.printfln(
+                    //    "count: %v,%v | data: %v | c16: %v",
+                    //    count_elems, i,
+                    //    data[i:i+size],
+                    //    casted_data, )
+                    count_elems += 1
+                    append(&_lines, cast(f64)casted_data)
+                }
+                return _lines[:]
+            }
+
+        case "f4" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            //ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]f32)
+            for i := 0; i <n_elem; i += size {
+                casted_data, cast_ok := endian.get_f32(data[i:i+size], header.header.endianess)
+                append(&_lines, casted_data)
+            }
+            return _lines[:]
+
+        case "f8" :
+
+            n_data_from_shape : int = 1
+            for shp in header.header.shape {
+                n_data_from_shape *= shp
+            }
+            size := len(data)/n_data_from_shape
+            //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
+            //ndarray.length = cast(u64)n_data_from_shape
+            ndarray.size = size
+
+            _lines := make([dynamic]f64)
+            for i := 0; i <n_elem; i += size {
+                casted_data, cast_ok := endian.get_f64(data[i:i+size], header.header.endianess)
+                append(&_lines, casted_data)
+            }
+            return _lines[:]
+
+
     }
 
-    size := len(data)/n_data_from_shape
-    fmt.printfln("number of elements in data: %v, with sizeof: %v", n_elem, size)
-
-    append(&_lines, data)
-    //fmt.printfln("data: %v len: %v", data, len(data))
-    //for i := 0; i <len(data)-4; i += 4 {
-    //    casted_data, cast_err := endian.get_u32(data[i:i+4], header.header.endianess)
-    //    append(&_lines, casted_data)
-    //}
-    //casted_data, cast_err := endian.get_u32(data[4:9], header.header.endianess)
-    //fmt.printfln("casted data: %v", casted_data)
-
-    return header, _lines[0], nil
+    return nil
 }
 
 parse_npy_header :: proc(
@@ -220,6 +553,7 @@ parse_npy_header :: proc(
 
     // Enhanced descriptor parsing
     if descr_start := strings.index(clean_header, "\"descr\":"); descr_start != -1 {
+
         descr_start += 8
         descr_end := strings.index_byte(clean_header[descr_start:], ',')
         if descr_end == -1 do return .Malformed_Header
@@ -230,89 +564,50 @@ parse_npy_header :: proc(
         switch {
         case strings.has_prefix(descr_str, "|"):
             h.endianess = endian.PLATFORM_BYTE_ORDER
-            descr, clone_err := strings.clone(descr_str[1:])
+            descr, clone_err := strings.clone(descr_str[:])
             h.descr = descr
-
-            //if clone_err == mem.Allocator_Error.None {
-            //    return .None
-            //}
-
-            //switch descr_str[1:] {
-            //    case "u1": h.descr = u8
-            //    case "i1": h.descr = i8
-            //    case "b1": h.descr = b8
-            //    case:      return .Invalid_Descriptor
-            //}
 
         case strings.has_prefix(descr_str, "<") :
             // Existing endian-sensitive types
             h.endianess = endian.Byte_Order.Little
-            descr, clone_err := strings.clone(descr_str[1:])
+            descr, clone_err := strings.clone(descr_str[:])
             h.descr = descr
-
-            //if clone_err == mem.Allocator_Error.None {
-            //    return .None
-            //}
-
-            //switch descr_str[1:] {
-            //    case "f8": h.descr = f64le
-            //    case "f4": h.descr = f32le
-            //    case "i8": h.descr = i64le
-            //    case "i4": h.descr = i32le
-            //    case "i2": h.descr = i16le
-            //    // Add more as needed
-            //    case: return .Invalid_Descriptor
-            //}
 
         case strings.has_prefix(descr_str, ">") :
             // Existing endian-sensitive types
             h.endianess = endian.Byte_Order.Big
-            descr, clone_err := strings.clone(descr_str[1:])
+            descr, clone_err := strings.clone(descr_str[:])
             h.descr = descr
-
-            //if clone_err == mem.Allocator_Error.None {
-            //    return .None
-            //}
-
-            //switch descr_str[1:] {
-            //    case "f8": h.descr = f64be
-            //    case "u4": h.descr = u32be
-            //    // Add more as needed
-            //    case: return .Invalid_Descriptor
-            //}
 
         case: // Handle non-byte-ordered types
             h.endianess = endian.PLATFORM_BYTE_ORDER
-            descr, clone_err := strings.clone(descr_str[1:])
+            descr, clone_err := strings.clone(descr_str[:])
             h.descr = descr
 
-            //if clone_err == mem.Allocator_Error.None {
-            //    return .None
-            //}
-
-            //switch descr_str {
-            //    case "u8": h.descr = u64
-            //    case "i8": h.descr = i64
-            //    // Add other architecture-neutral types
-            //    case: return .Invalid_Descriptor
-            //}
         }
     }
 
     // Parse fortran_order
     if fo_start := strings.index(clean_header, "\"fortran_order\":"); fo_start != -1 {
+
         fo_start += 16  // Skip `"fortran_order": `
         fo_str := clean_header[fo_start:]
         h.fortran_order = strings.has_prefix(fo_str, "True")
+
     }
 
     // Parse shape tuple
     if shape_start := strings.index(clean_header, "\"shape\":"); shape_start != -1 {
+
         shape_start += 8  // Skip `"shape": `
         shape_end := strings.index_byte(clean_header[shape_start:], ']')
+
         if shape_end == -1 {
+
             return .Shape_Parse_Failed
+
         }
+
         shape_str := clean_header[shape_start:shape_start+shape_end]
         shape_str = strings.trim_space(shape_str)
         shape_str = strings.trim(shape_str, "[]")
@@ -330,6 +625,7 @@ parse_npy_header :: proc(
             }
             append(&h.shape, value)
         }
+
     }
 
     return .None

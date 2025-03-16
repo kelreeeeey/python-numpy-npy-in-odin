@@ -8,15 +8,24 @@ def make_integer_arrays() -> None:
     b_5x5     = np.array(list(repeat(b_5, 5)))
     np.save("./test_data/ints/b_5x5.npy", b_5x5)
 
+    print(f"{ b_5= }")
+    print(f"{ b_5x5= }")
+
     byte_5     = np.array([1, 0, 1, 0, 1]).astype(np.byte)
     np.save("./test_data/ints/byte_5.npy", byte_5)
     byte_5x5     = np.array(list(repeat(byte_5, 5)))
     np.save("./test_data/ints/byte_5x5.npy", byte_5x5)
 
+    print(f"{ byte_5= }")
+    print(f"{ byte_5x5= }")
+
     ubyte_5     = np.array([1, 0, 1, 0, 1]).astype(np.ubyte)
     np.save("./test_data/ints/ubyte_5.npy", ubyte_5)
     ubyte_5x5     = np.array(list(repeat(ubyte_5, 5)))
     np.save("./test_data/ints/ubyte_5x5.npy", ubyte_5x5)
+
+    print(f"{ ubyte_5= }")
+    print(f"{ ubyte_5x5= }")
 
     short_5     = np.array([1, 0, 1, 0, 1]).astype(np.short)
     np.save("./test_data/ints/short_5.npy", short_5)
@@ -62,6 +71,9 @@ def make_integer_arrays() -> None:
     np.save("./test_data/ints/uint8_5.npy", uint8_5)
     uint8_5x5     = np.array(list(uint8_5 + x for x in range(5)))
     np.save("./test_data/ints/uint8_5x5.npy", uint8_5x5)
+
+    print(f"{ uint8_5= }")
+    print(f"{ uint8_5x5= }")
 
     int16 = np.arange(1, 6, 1).astype(np.int16)
     np.save("./test_data/ints/int16_5.npy", int16)

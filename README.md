@@ -3,6 +3,8 @@
 [Python]( https://www.python.org/ )-[ Numpy ](https://github.com/numpy/numpy) `.npy` file reader in [ Odin ](https://odin-lang.org/)
 
 > this repo currently is under development using [ python 3.10 ](https://www.python.org/downloads/release/python-31016/) and [ numpy version 1.26.4 ](https://numpy.org/devdocs/release/1.26.4-notes.html)
+> odin version `dev-2025-03:951bef4ad`
+
 ## Motivations
 
 * I've been coding EXHAUSTIVELY in python, and 've been using numpy since day-1.
@@ -147,6 +149,17 @@ Example output of 1 folder
 
 ![Example output of 1 folder](./assets/dirty_1_input_folders.png)
 
+## Now the Odin one
+
+i currently using odin version `dev-2025-03:951bef4ad`
+
+here i use
+
+```bash
+odin build npyodin -out:npyodin\main.exe
+./npyodin/main.exe ./test_data/ints/int32_5.npy
+```
+
 ## TL;DR, 
 
 ### Numpy (v1.26.4) DataTypes
@@ -190,4 +203,3 @@ Here's some cleaned output i awk-ed my way through from the outputs of
 | half | `<f2` |
 | longdouble | `<f8` |
 | single | `<f4` |
-
