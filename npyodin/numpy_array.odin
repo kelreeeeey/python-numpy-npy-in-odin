@@ -66,31 +66,6 @@ MAGIC :: []u8{0x93, 'N', 'U', 'M', 'P', 'Y'}
 MAGIG_LEN := len(MAGIC)
 DELIM : byte = '\n'
 
-NumpySaveVersion :: struct {
-    maj: u8,
-    min: u8
-}
-
-Descriptor :: struct {
-    descr: string,
-    fortran_order: bool,
-    shape: [dynamic]int,
-    endianess: endian.Byte_Order,
-}
-
-NumpyHeader :: struct #packed {
-    magic: string,
-    version: NumpySaveVersion,
-    header_length: u16le,
-    header: Descriptor,
-}
-
-delete_header :: proc(h: ^NumpyHeader) {
-    delete (h.magic)
-    delete (h.header.shape)
-    delete (h.header.descr)
-}
-
 Array_b8 :: []b8
 Array_u8 :: []u8
 Array_i8 :: []i8
@@ -130,6 +105,31 @@ ArrayTypes :: union {
     Array_f16le,
 }
 
+NumpySaveVersion :: struct {
+    maj: u8,
+    min: u8
+}
+
+Descriptor :: struct {
+    descr: string,
+    fortran_order: bool,
+    shape: [dynamic]int,
+    endianess: endian.Byte_Order,
+}
+
+NumpyHeader :: struct #packed {
+    magic: string,
+    version: NumpySaveVersion,
+    header_length: u16le,
+    header: Descriptor,
+}
+
+NDArray :: struct {
+    data : ArrayTypes,
+    size : int,
+    length : u64
+}
+
 delete_ndarray :: proc(nd: ^NDArray) {
     switch arr in nd.data {
     case Array_b8:    delete(arr)
@@ -148,13 +148,14 @@ delete_ndarray :: proc(nd: ^NDArray) {
     case Array_f16le: delete(arr)
     }
 }
-NDArray :: struct {
-    data : ArrayTypes,
-    size : int,
-    length : u64
+
+delete_header :: proc(h: ^NumpyHeader) {
+    delete (h.magic)
+    delete (h.header.shape)
+    delete (h.header.descr)
 }
 
-decode_npfile :: proc(
+load_npy :: proc(
     file_name: string,
     bufreader_size: int,
     allocator:= context.allocator) -> (

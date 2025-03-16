@@ -49,12 +49,12 @@ def make_floats_arrays() -> None:
 ```bash
 
 py -3.10 ./generate_array.py
-odin build ./npyodin/main.odin -out:./npyodin/main.exe
+odin build ./main.odin -out:./main.exe
 ```
 
 ```bash
-./npyodin/main.exe ./test_data/floats/float64_5.npy
-./npyodin/main.exe ./test_data/floats/float64_5x5.npy
+./main.exe ./test_data/floats/float64_5.npy
+./main.exe ./test_data/floats/float64_5x5.npy
 ```
 ```raw
 file: .\test_data\floats\float64_5.npy
@@ -73,8 +73,8 @@ Data: NDArray{data = [1, 2, 3, 4, 5, 2, 3, 4, 5, 6, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8
 ```
 
 ```bash
-./npyodin/main.exe ./test_data/ints/uint8_5.npy
-./npyodin/main.exe ./test_data/ints/uint8_5x5.npy
+./main.exe ./test_data/ints/uint8_5.npy
+./main.exe ./test_data/ints/uint8_5x5.npy
 ```
 ```raw
 file: ./test_data/ints/uint8_5.npy
@@ -133,23 +133,23 @@ i specifically watched these playlists:
 
 ### research, duh!?
 
-1. how numpy save 'em files in disk
+1. how numpy save 'em files in disk  [✅]
 2. how numpy load 'em .npy files to memory
 
 those 2 coherently relates to file descriptor a.k.a header, and the array itself.
 
 ### reverse the thing
 
-1. open and read the bytes
+1. open and read the bytes [✅]
 2. reconstruct the file header. File header contains informations of
-what and how we can recreate the array
-3. reconstruct the array
+what and how we can recreate the array [✅]
+3. reconstruct the array [❌]
 
 ### plans
 
-1. i'll focus on integers and floats first
-2. i'll do some basic 1D arrays and 2D arrays.
-3. after the reconstructions, it'll be nice to save it back as `.npy` file too!.
+1. i'll focus on integers and floats first [✅]
+2. i'll do some basic 1D arrays and 2D arrays. [✅]
+3. after the reconstructions, it'll be nice to save it back as `.npy` file too!. [❌]
 
 ## Workflow
 
@@ -244,7 +244,7 @@ here i use
 
 ```bash
 odin build npyodin -out:npyodin\main.exe
-./npyodin/main.exe ./test_data/ints/int32_5.npy
+./main.exe ./test_data/ints/int32_5.npy
 ```
 
 ## TL;DR, 
