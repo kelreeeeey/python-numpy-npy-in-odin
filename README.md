@@ -57,19 +57,19 @@ odin build ./npyodin/main.odin -out:./npyodin/main.exe
 ./npyodin/main.exe ./test_data/floats/float64_5x5.npy
 ```
 ```raw
-file: ./test_data/floats/float64_5.npy
+file: .\test_data\floats\float64_5.npy
 Header:
 | NumpyHeader{magic = "\x93NUMPY", version = NumpySaveVersion{maj = 1, min = 0}, header_length = 118, header = Descriptor{descr = "<f8", fortran_order = false, shape = [5], endianess = "Little"}}
-Data: NDArray{data = [1, 2, 3, 4, 5], size = 8, length = 0}
+Data: NDArray{data = [1, 2, 3, 4, 5], size = 8, length = 5}
 | size_of that thing: 40 bytes
-| with lenght of: 0 bits
+| with lenght of: 5 bits
 
-file: ./test_data/floats/float64_5x5.npy
+file: .\test_data\floats\float64_5x5.npy
 Header:
 | NumpyHeader{magic = "\x93NUMPY", version = NumpySaveVersion{maj = 1, min = 0}, header_length = 118, header = Descriptor{descr = "<f8", fortran_order = false, shape = [5, 5], endianess = "Little"}}
-Data: NDArray{data = [1, 2, 3, 4, 5, 2, 3, 4, 5, 6, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8, 5, 6, 7, 8, 9], size = 8, length = 0}
+Data: NDArray{data = [1, 2, 3, 4, 5, 2, 3, 4, 5, 6, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8, 5, 6, 7, 8, 9], size = 8, length = 25}
 | size_of that thing: 40 bytes
-| with lenght of: 0 bits
+| with lenght of: 25 bits
 ```
 
 ```bash

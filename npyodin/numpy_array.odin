@@ -110,6 +110,9 @@ Array_f64 :: []f64
 Array_f16be :: []f16be
 Array_f16le :: []f16le
 
+Array_c8 :: []complex32
+Array_c16 :: []complex64
+
 ArrayTypes :: union {
     Array_b8,
     Array_u8,
@@ -520,7 +523,7 @@ recreate_array :: proc(
             }
             size := len(data)/n_data_from_shape
             //fmt.printfln("len(data): %v | n_data_from_shape: %v", len(data), n_data_from_shape)
-            //ndarray.length = cast(u64)n_data_from_shape
+            ndarray.length = cast(u64)n_data_from_shape
             ndarray.size = size
 
             _lines := make([dynamic]f64)
