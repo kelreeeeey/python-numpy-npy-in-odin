@@ -5,6 +5,93 @@
 > this repo currently is under development using [ python 3.10 ](https://www.python.org/downloads/release/python-31016/) and [ numpy version 1.26.4 ](https://numpy.org/devdocs/release/1.26.4-notes.html)
 > odin version `dev-2025-03:951bef4ad`
 
+---
+
+> UPDATE!!!: I DID IT :D, i know it's dirty and i need to be more mindfull here and there
+> but it worked.
+
+
+```python
+# in ./generate_array.py
+
+def make_integer_arrays() -> None:
+    # ...
+
+    int8_5 = np.arange(1, 6, 1).astype(np.int8)
+    np.save("./test_data/ints/int8_5.npy", int8_5)
+    int8_5x5     = np.array(list(int8_5 + x for x in range(5)))
+    np.save("./test_data/ints/int8_5x5.npy", int8_5x5)
+
+    uint8_5 = np.arange(1, 6, 1).astype(np.uint8)
+    np.save("./test_data/ints/uint8_5.npy", uint8_5)
+    uint8_5x5     = np.array(list(uint8_5 + x for x in range(5)))
+    np.save("./test_data/ints/uint8_5x5.npy", uint8_5x5)
+
+    # ...
+
+    return None
+
+def make_floats_arrays() -> None:
+    # ...
+
+    float64 = np.arange(1, 6, 1).astype(np.float64)
+    np.save("./test_data/floats/float64_5.npy", float64)
+
+    float64_5x5     = np.array(list(float64 + x for x in range(5)))
+    np.save("./test_data/floats/float64_5x5.npy", float64_5x5)
+
+    # ...
+
+    return None
+
+```
+
+```bash
+
+py -3.10 ./generate_array.py
+odin build ./npyodin/main.odin -out:./npyodin/main.exe
+```
+
+```bash
+./npyodin/main.exe ./test_data/floats/float64_5.npy
+./npyodin/main.exe ./test_data/floats/float64_5x5.npy
+```
+```raw
+file: ./test_data/floats/float64_5.npy
+Header:
+| NumpyHeader{magic = "\x93NUMPY", version = NumpySaveVersion{maj = 1, min = 0}, header_length = 118, header = Descriptor{descr = "<f8", fortran_order = false, shape = [5], endianess = "Little"}}
+Data: NDArray{data = [1, 2, 3, 4, 5], size = 8, length = 0}
+| size_of that thing: 40 bytes
+| with lenght of: 0 bits
+
+file: ./test_data/floats/float64_5x5.npy
+Header:
+| NumpyHeader{magic = "\x93NUMPY", version = NumpySaveVersion{maj = 1, min = 0}, header_length = 118, header = Descriptor{descr = "<f8", fortran_order = false, shape = [5, 5], endianess = "Little"}}
+Data: NDArray{data = [1, 2, 3, 4, 5, 2, 3, 4, 5, 6, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8, 5, 6, 7, 8, 9], size = 8, length = 0}
+| size_of that thing: 40 bytes
+| with lenght of: 0 bits
+```
+
+```bash
+./npyodin/main.exe ./test_data/ints/uint8_5.npy
+./npyodin/main.exe ./test_data/ints/uint8_5x5.npy
+```
+```raw
+file: ./test_data/ints/uint8_5.npy
+Header:
+| NumpyHeader{magic = "\x93NUMPY", version = NumpySaveVersion{maj = 1, min = 0}, header_length = 118, header = Descriptor{descr = "|u1", fortran_order = false, shape = [5], endianess = "Little"}}
+Data: NDArray{data = [1, 2, 3, 4, 5], size = 1, length = 5}
+| size_of that thing: 40 bytes
+| with lenght of: 5 bits
+
+file: ./test_data/ints/uint8_5x5.npy
+Header:
+| NumpyHeader{magic = "\x93NUMPY", version = NumpySaveVersion{maj = 1, min = 0}, header_length = 118, header = Descriptor{descr = "|u1", fortran_order = false, shape = [5, 5], endianess = "Little"}}
+Data: NDArray{data = [1, 2, 3, 4, 5, 2, 3, 4, 5, 6, 3, 4, 5, 6, 7, 4, 5, 6, 7, 8, 5, 6, 7, 8, 9], size = 1, length = 25}
+| size_of that thing: 40 bytes
+| with lenght of: 25 bits
+```
+
 ## Motivations
 
 * I've been coding EXHAUSTIVELY in python, and 've been using numpy since day-1.
