@@ -3,8 +3,6 @@ package main
 import "base:runtime"
 import "core:fmt"
 import "core:os"
-import "core:strings"
-import "core:encoding/endian"
 import npyload "npyodin"
 
 default_context : runtime.Context

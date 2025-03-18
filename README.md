@@ -108,7 +108,7 @@ esp large data, like `.npy` files.
 * as far as my ability to surfing and searching through the internet, i haven't
 found single person doing this kinda thing
 
-* inspired by Bill, G.. He wrote about [ "Reverse Engineering Alembic" ](https://www.gingerbill.org/article/2022/07/11/reverse-engineering-alembic/)
+* inspired by Bill, G.. He wrote about ["Reverse Engineering Alembic"](https://www.gingerbill.org/article/2022/07/11/reverse-engineering-alembic/)
 which where He tried to reading [ Alembic ](.http://www.alembic.io/) interchange file format for his
 works and his team in [ JangaFX ](https://jangafx.com/) and try to read it in
 [ Odin ](https://odin-lang.org/)
@@ -134,7 +134,7 @@ i specifically watched these playlists:
 ### research, duh!?
 
 1. how numpy save 'em files in disk  [✅]
-2. how numpy load 'em .npy files to memory
+2. how numpy load 'em .npy files to memory  [✅]
 
 those 2 coherently relates to file descriptor a.k.a header, and the array itself.
 
@@ -143,13 +143,14 @@ those 2 coherently relates to file descriptor a.k.a header, and the array itself
 1. open and read the bytes [✅]
 2. reconstruct the file header. File header contains informations of
 what and how we can recreate the array [✅]
-3. reconstruct the array [❌]
+3. reconstruct the array [✅]
 
 ### plans
 
 1. i'll focus on integers and floats first [✅]
 2. i'll do some basic 1D arrays and 2D arrays. [✅]
-3. after the reconstructions, it'll be nice to save it back as `.npy` file too!. [❌]
+3. the complex dtypes are handled gracefully. [✅]
+4. after the reconstructions, it'll be nice to save it back as `.npy` file too!. [❌]
 
 ## Workflow
 
