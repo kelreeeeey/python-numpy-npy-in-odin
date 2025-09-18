@@ -188,6 +188,7 @@ load_npy :: proc(
     if _lines == nil do return npy_header, lines, nil
     lines.data = _lines
     return npy_header, lines, nil
+	if !ok do return npy_header, nil, RecreateArrayError{"Cannot parse data array, possible curropted data type is not supported yet"}
 }
 
 @(private = "file")

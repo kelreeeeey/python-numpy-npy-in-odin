@@ -5,6 +5,8 @@ import "core:io"
 import "core:bufio"
 import "core:mem"
 
+// TODO (Rey): Probably reorganize and change the naming
+// convention for these unions and structs
 ReadFileError :: union {
 	OpenError,
 	ReaderCreationError,
@@ -15,6 +17,7 @@ ReadFileError :: union {
 	InvalidHeaderError,
 	InvalidVersionError,
 	InvalidHeaderLengthError,
+	RecreateArrayError,
 	ParseError,
 }
 
@@ -52,4 +55,8 @@ ParseError :: enum {
 	Invalid_Descriptor,
 	Malformed_Header,
 	Shape_Parse_Failed,
+}
+
+RecreateArrayError :: struct {
+	message: string,
 }
