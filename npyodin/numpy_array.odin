@@ -10,6 +10,7 @@ import "core:bufio"
 import "core:mem"
 import "core:c"
 import "core:strings"
+import "core:slice"
 import "core:strconv"
 import "core:encoding/endian"
 
@@ -132,6 +133,11 @@ load_npy :: proc(
     parsed_header : Descriptor
     parr_err := parse_npy_header(&parsed_header, string( header_desc ))
     npy_header.header = parsed_header
+	magic : [6]u8
+	// read magic magic
+	read, rerr := io.read(reader, magic[:], &MAGIG_LEN)
+	if rerr != nil || read != 6 do return npy_header, nil, InvalidHeaderError{"Invalid magic number"}
+	if !slice.equal(magic[:], MAGIC) do return npy_header, nil, InvalidHeaderError{"Invalid magic number"}
 
 		&npy_header,
 		&bufio_reader,
