@@ -2,13 +2,18 @@
 
 [Python]( https://www.python.org/ )-[ Numpy ](https://github.com/numpy/numpy) `.npy` file reader in [ Odin ](https://odin-lang.org/)
 
+> [!WARNING]
 > this repo currently is under development using [ python 3.10 ](https://www.python.org/downloads/release/python-31016/) and [ numpy version 1.26.4 ](https://numpy.org/devdocs/release/1.26.4-notes.html)
 > odin version `dev-2025-03:951bef4ad`
 
----
 
-> UPDATE!!!: I DID IT :D, i know it's dirty and i need to be more mindfull here and there
-> but it worked.
+## Example
+
+## Usage
+
+<details>
+
+<summary><h2>TL;DR</h2> </summary>
 
 
 ```python
@@ -291,3 +296,5 @@ Here's some cleaned output i awk-ed my way through from the outputs of
 | half | `<f2` |
 | longdouble | `<f8` |
 | single | `<f4` |
+
+</details>
