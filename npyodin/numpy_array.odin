@@ -18,7 +18,7 @@ import "core:encoding/endian"
 // from https://github.com/numpy/numpy/blob/main/numpy/lib/_format_impl.py
 MAGIC :: []u8{0x93, 'N', 'U', 'M', 'P', 'Y'}
 MAGIG_LEN := len(MAGIC)
-DELIM : byte = '\n'
+DELIM : u8 = '\n'
 
 ArrayTypes :: union {
 	b8,
@@ -92,6 +92,7 @@ array_alloc :: proc(
 
 	res.data = make([]ArrayTypes, length, allocator)
 	res.shape = make([]uint, len(shape), allocator)
+	res.length = length
 	// initialize shape and strides
 	copy(res.shape, shape)
 	return res
@@ -100,7 +101,7 @@ array_alloc :: proc(
 load_npy :: proc(
 	file_name: string,
 	bufreader_size: int = 1024,
-	delimiter: byte = DELIM,
+	delimiter: u8 = DELIM,
 	allocator:= context.allocator,
 	loc := #caller_location,
 ) -> (
@@ -192,12 +193,12 @@ recreate_array :: proc(
 	np_header: ^NumpyHeader,
 	reader: ^bufio.Reader,
 	ndarray : ^NDArray,
-	delimiter: byte = DELIM,
+	delimiter: u8 = DELIM,
 	allocator := context.allocator,
 	loc := #caller_location,
 ) -> bool {
 
-    data, read_bytes_err := bufio.reader_read_bytes(reader, cast(u8)delimiter, allocator)
+    data, read_bytes_err := bufio.reader_read_bytes(reader, '\n', allocator)
     defer delete(data)
     n_elem := cast(uint)len(data)
 
@@ -209,7 +210,7 @@ recreate_array :: proc(
 		length := raw_length[0]
 		ndarray.length = length
 	}
-	ndarray.size =  cast(uint)len(data)/ndarray.length
+	ndarray.size = cast(uint)n_elem / ndarray.length
 
 	i := uint(0)
 	count := uint(0)
@@ -351,7 +352,7 @@ recreate_array :: proc(
 		for ; i < n_elem; i += ndarray.size {
 			casted_data, cast_ok := endian.get_f64(data[i:i+ndarray.size], np_header.endianess)
 			if !cast_ok do break
-			ndarray.data[count] = casted_data
+			ndarray.data[count] = cast(f64)casted_data
 			count += 1
 		}
 		return cast_ok

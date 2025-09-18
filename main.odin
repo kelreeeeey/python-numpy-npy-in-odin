@@ -9,14 +9,14 @@ default_context : runtime.Context
 
 main :: proc() {
 
-	context.allocator = context.temp_allocator
+	// context.allocator = context.temp_allocator
+	default_context = context
 
     file_name : string = os.args[1]
     defer delete(file_name)
 
-    np_header, ndarray, ok := npyload.load_npy(file_name)
+    np_header, ndarray, ok := npyload.load_npy(file_name, allocator=default_context.allocator)
 	if ok != nil do fmt.panicf("Wth")
-
     defer npyload.delete_ndarray(ndarray)
     defer npyload.delete_header(&np_header)
 
@@ -30,7 +30,7 @@ main :: proc() {
     fmt.printfln("\t shape : %v", np_header.shape)
     fmt.printfln("\t endianess : %v", np_header.endianess)
     fmt.println("\tData")
-    fmt.printfln("\t data: %v", ndarray.data)
+    fmt.printfln("\t data: %v", ndarray.data[:5])
     fmt.printfln("\t size: %v", ndarray.size)
     fmt.printfln("\t len : %v", ndarray.length)
     fmt.printfln("\t size of  : %v", size_of(ndarray))

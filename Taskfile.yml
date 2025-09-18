@@ -8,7 +8,7 @@ vars:
 tasks:
     build:
         cmds:
-        - odin build . -o:speed -out:./builds/python-numpy-npy-in-odin.exe
+        - odin build . -o:aggressive -out:./builds/python-numpy-npy-in-odin.exe
         silent: true
         generates:
             - ./python-numpy-npy-in-odin.exe
