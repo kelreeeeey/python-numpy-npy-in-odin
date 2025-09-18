@@ -5,9 +5,6 @@
 > [!WARNING]
 > this repo currently is under development using [ python 3.10 ](https://www.python.org/downloads/release/python-31016/) and [ numpy version 1.26.4 ](https://numpy.org/devdocs/release/1.26.4-notes.html)
 > odin version `dev-2025-09:9abc3f67b`
->
-> THIS IS UNSTABLE, FOR LARGE SHAPE ARRAY, IT SOMEHOW FAILS TO PARSE. THAT'S ON ME 
-
 
 ## Example
 
@@ -22,9 +19,6 @@
     defer npyload.delete_header(&np_header)
 
 ```
-
-> [!WARNING]
-> idk why, npy files produced by `np.random.rnd` giving weird behaviour.
 
 ## Usage
 
