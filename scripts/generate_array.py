@@ -1,5 +1,6 @@
 import numpy as np
 from itertools import repeat
+import os
 
 def make_integer_arrays() -> None:
 
@@ -149,6 +150,12 @@ def make_floats_arrays() -> None:
     return None
 
 def main() -> None:
+    if not os.path.exists("./test_data/"):
+        os.makedirs("./test_data", exist_ok=True)
+
+    for d in ( "./test_data/ints/", "./test_data/floats/"):
+        if not os.path.exists(d):
+            os.makedirs(d, exist_ok=True)
 
     make_integer_arrays()
     make_floats_arrays()
