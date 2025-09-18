@@ -198,9 +198,17 @@ recreate_array :: proc(
 	loc := #caller_location,
 ) -> bool {
 
-    data, read_bytes_err := bufio.reader_read_bytes(reader, '\n', allocator)
-    defer delete(data)
-    n_elem := cast(uint)len(data)
+	count := uint(0)
+    read_lines := make([dynamic]u8, 0, allocator=allocator)
+
+	n_elem : uint = 0
+	for {
+		raw_data, read_bytes_err := bufio.reader_read_bytes(reader, delimiter, allocator)
+		n_elem += cast(uint)len(raw_data)
+		append(&read_lines, ..raw_data[:])
+		if read_bytes_err == os.ERROR_EOF do break
+	}
+	data := read_lines[:]
 
 	raw_length := np_header.shape
 	if len(raw_length) > 1 {
@@ -213,7 +221,6 @@ recreate_array :: proc(
 	ndarray.size = cast(uint)n_elem / ndarray.length
 
 	i := uint(0)
-	count := uint(0)
     switch np_header.descr[1:] {
 	case "b1" :
 		for ; i <n_elem; i += 1 {
