@@ -4,12 +4,48 @@
 
 > [!WARNING]
 > this repo currently is under development using [ python 3.10 ](https://www.python.org/downloads/release/python-31016/) and [ numpy version 1.26.4 ](https://numpy.org/devdocs/release/1.26.4-notes.html)
-> odin version `dev-2025-03:951bef4ad`
+> odin version `dev-2025-09:9abc3f67b`
 
 
 ## Example
 
+```odin
+    // context.allocator = context.temp_allocator
+    default_context = context
+    file_name : string = os.args[1]
+    defer delete(file_name)
+    np_header, ndarray, ok := npyload.load_npy(file_name, allocator=default_context.allocator)
+    if ok != nil do fmt.panicf("Wth %v", ok)
+    defer npyload.delete_ndarray(ndarray)
+    defer npyload.delete_header(&np_header)
+
+```
+
+> [!WARNING]
+> idk why, npy files produced by `np.random.rnd` giving weird behaviour.
+
 ## Usage
+
+```bash
+odin build . -o:speed -out:name-whtvr-youd-like.exe
+./name-whtvr-youd-like.exe <path/to/your/file.npy>
+```
+
+There also a script to generate plenty of NumPy's npy files
+
+```bash
+python ./scripts/generate_array.py
+chmod u+x ./scripts/test_all_floats.sh
+chmod u+x ./scripts/test_all_ints.sh
+bash ./scripts/test_all_floats.sh && bash ./scripts/test_all_ints.sh
+```
+
+if you have [Taskfile](https://taskfile.dev/) installed, you can just
+
+```bash
+task build && task ints
+```
+
 
 <details>
 
