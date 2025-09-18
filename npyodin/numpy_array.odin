@@ -178,32 +178,31 @@ load_npy :: proc(
     parr_err := parse_npy_header(&parsed_header, string( header_desc ))
     npy_header.header = parsed_header
 
-    _lines := recreate_array(
 		&npy_header,
 		&bufio_reader,
-		&lines,
+		out,
 		delimiter = delimiter,
 		allocator = allocator
 	)
-    if _lines == nil do return npy_header, lines, nil
-    lines.data = _lines
-    return npy_header, lines, nil
 	if !ok do return npy_header, nil, RecreateArrayError{"Cannot parse data array, possible curropted data type is not supported yet"}
+	return npy_header, out, nil
 }
 
 @(private = "file")
 recreate_array :: proc(
-    np_header: ^NumpyHeader,
-    reader: ^bufio.Reader,
-    ndarray : ^NDArray,
+	np_header: ^NumpyHeader,
+	reader: ^bufio.Reader,
+	ndarray : ^NDArray,
 	delimiter: byte = DELIM,
-    allocator := context.allocator ) -> ArrayTypes {
+	allocator := context.allocator,
+	loc := #caller_location,
+) -> bool {
 
     data, read_bytes_err := bufio.reader_read_bytes(reader, cast(u8)delimiter, allocator)
     defer delete(data)
     n_elem := cast(uint)len(data)
 
-	raw_length := np_header.header.shape
+	raw_length := np_header.shape
 	if len(raw_length) > 1 {
 		length := shape_to_size(cast([]uint)raw_length)
 		ndarray.length = length
@@ -211,136 +210,154 @@ recreate_array :: proc(
 		length := raw_length[0]
 		ndarray.length = length
 	}
-	ndarray.size = cast(uint)len(data)/ndarray.length
+	ndarray.size =  cast(uint)len(data)/ndarray.length
 
 	i := uint(0)
 	count := uint(0)
-    switch np_header.header.descr[1:] {
-
+    switch np_header.descr[1:] {
 	case "b1" :
-		_lines := make([]b8, ndarray.length, allocator)
 		for ; i <n_elem; i += 1 {
-			_lines[count] = cast(b8)data[i]
+			ndarray.data[count] = cast(b8)data[i]
 			count += 1
 		}
-		return _lines
+		return true
 
 	case "u1" :
-		_lines := make([]i8, ndarray.length, allocator)
 		for ; i <n_elem; i += 1 {
-			_lines[count] = cast(i8)data[i]
+			ndarray.data[count] = cast(i8)data[i]
 			count += 1
 		}
-		return _lines
+		return true
 
 	case "i1" :
-		_lines := make([]i8, ndarray.length, allocator)
 		for ; i < n_elem; i += 1 {
-			_lines[count] = cast(i8)data[i]
+			ndarray.data[count] = cast(i8)data[i]
 			count += 1
 		}
-		return _lines
+		return true
 
 	case "i2" :
-		_lines := make([]i16, ndarray.length, allocator)
+		casted_data : i16
+		cast_ok : bool = true
 		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_i16(data[i:i+ndarray.size], np_header.header.endianess)
-			_lines[count] = cast(i16)casted_data
+			casted_data, cast_ok = endian.get_i16(data[i:i+ndarray.size], np_header.endianess)
+			if !cast_ok do break
+			ndarray.data[count] = cast(i16)casted_data
 			count += 1
 		}
-		return _lines
+		return cast_ok
 
 	case "u2" :
-		_lines := make([]u16, ndarray.length, allocator)
+		casted_data : u16
+		cast_ok : bool = true
 		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_u16(data[i:i+ndarray.size], np_header.header.endianess)
-			_lines[count] = cast(u16)casted_data
+			casted_data, cast_ok = endian.get_u16(data[i:i+ndarray.size], np_header.endianess)
+			if !cast_ok do break
+			ndarray.data[count] = cast(i16)casted_data
 			count += 1
 		}
-		return _lines
+		return cast_ok
 
 	case "u4" :
-		_lines := make([]u32, ndarray.length, allocator)
+		casted_data : u32
+		cast_ok : bool = true
 		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_u32(data[i:i+ndarray.size], np_header.header.endianess)
-			_lines[count] = cast(u32)casted_data
+			casted_data, cast_ok = endian.get_u32(data[i:i+ndarray.size], np_header.endianess)
+			if !cast_ok do break
+			ndarray.data[count] = casted_data
 			count += 1
 		}
-		return _lines
+		return cast_ok
 
 	case "i4" :
-		_lines := make([]i32, ndarray.length, allocator)
+		casted_data : i32
+		cast_ok : bool = true
 		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_i32(data[i:i+ndarray.size], np_header.header.endianess)
-			_lines[count] = cast(i32)casted_data
+			casted_data, cast_ok := endian.get_i32(data[i:i+ndarray.size], np_header.endianess)
+			if !cast_ok do break
+			ndarray.data[count] = casted_data
 			count += 1
 		}
-		return _lines
+		return cast_ok
 
 	case "u8" :
-		_lines := make([]u16, ndarray.length, allocator)
+		casted_data : u16
+		cast_ok : bool = true
 		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_u16(data[i:i+ndarray.size], np_header.header.endianess)
-			_lines[count] = cast(u16)casted_data
+			casted_data, cast_ok = endian.get_u16(data[i:i+ndarray.size], np_header.endianess)
+			if !cast_ok do break
+			ndarray.data[count] = casted_data
 			count += 1
 		}
-		return _lines
+		return cast_ok
 
 	case "i8" :
-		_lines := make([]i64, ndarray.length, allocator)
+		casted_data : i64
+		cast_ok : bool = true
 		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_i64(data[i:i+ndarray.size], np_header.header.endianess)
-			_lines[count] = cast(i64)casted_data
+			casted_data, cast_ok := endian.get_i64(data[i:i+ndarray.size], np_header.endianess)
+			if !cast_ok do break
+			ndarray.data[count] = casted_data
 			count += 1
 		}
-		return _lines
+		return cast_ok
 
 	case "f2" :
-		_lines := make([]f16, ndarray.length, allocator)
+		casted_data : f16
+		cast_ok : bool = true
 		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_f16(data[i:i+ndarray.size], np_header.header.endianess)
-			_lines[count] = cast(f16)casted_data
+			casted_data, cast_ok := endian.get_f16(data[i:i+ndarray.size], np_header.endianess)
+			if !cast_ok do break
+			ndarray.data[count] = casted_data
 			count += 1
 		}
-		return _lines
+		return cast_ok
 
 	case "c8" :
-		_lines := make([]complex32, ndarray.length, allocator)
+		casted_data : f32
+		cast_ok : bool = true
 		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_f32(data[i:i+ndarray.size], np_header.header.endianess)
-			_lines[count] = cast(complex32)casted_data
+			casted_data, cast_ok := endian.get_f32(data[i:i+ndarray.size], np_header.endianess)
+			if !cast_ok do break
+			ndarray.data[count] = cast(complex32)casted_data
 			count += 1
 		}
-		return _lines
+		return cast_ok
 
 	case "c16" :
-		_lines := make([]complex64, ndarray.length, allocator)
+		casted_data : f64
+		cast_ok : bool = true
 		for ; i < n_elem-uint(ndarray.size/2); i += ndarray.size {
-			casted_data, cast_ok := endian.get_f64(data[i:i+ndarray.size], np_header.header.endianess)
-			_lines[count] = cast(complex64)casted_data
+			casted_data, cast_ok := endian.get_f64(data[i:i+ndarray.size], np_header.endianess)
+			if !cast_ok do break
+			ndarray.data[count] = cast(complex64)casted_data
 			count += 1
 		}
-		return _lines
+		return cast_ok
 
 	case "f4" :
-		_lines := make([]f32, ndarray.length, allocator)
+		casted_data : f32
+		cast_ok : bool = true
 		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_f32(data[i:i+ndarray.size], np_header.header.endianess)
-			_lines[count] = cast(f32)casted_data
+			casted_data, cast_ok := endian.get_f32(data[i:i+ndarray.size], np_header.endianess)
+			if !cast_ok do break
+			ndarray.data[count] = cast(f32)casted_data
 			count += 1
 		}
-		return _lines
+		return cast_ok
 
 	case "f8" :
-		_lines := make([]f64, ndarray.length, allocator)
+		casted_data : f64
+		cast_ok : bool = true
 		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_f64(data[i:i+ndarray.size], np_header.header.endianess)
-			_lines[count] = cast(f64)casted_data
+			casted_data, cast_ok := endian.get_f64(data[i:i+ndarray.size], np_header.endianess)
+			if !cast_ok do break
+			ndarray.data[count] = casted_data
 			count += 1
 		}
-		return _lines
+		return cast_ok
     }
-    return nil
+    return true
 }
 
 @(private = "file")
