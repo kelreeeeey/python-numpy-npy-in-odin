@@ -19,103 +19,58 @@ MAGIC :: []u8{0x93, 'N', 'U', 'M', 'P', 'Y'}
 MAGIG_LEN := len(MAGIC)
 DELIM : byte = '\n'
 
-Array_b8 :: []b8
-Array_u8 :: []u8
-Array_i8 :: []i8
-
-Array_i16 :: []i16
-Array_u16 :: []u16
-
-Array_i32 :: []i32
-Array_u32 :: []u32
-
-Array_i64 :: []i64
-Array_u64 :: []u64
-
-Array_f16 :: []f16
-Array_f32 :: []f32
-Array_f64 :: []f64
-Array_f16be :: []f16be
-Array_f16le :: []f16le
-
-Array_c8 :: []complex32
-Array_c16 :: []complex64
-
 ArrayTypes :: union {
-    Array_b8,
-    Array_u8,
-    Array_i8,
-    Array_i16,
-    Array_u16,
-    Array_i32,
-    Array_u32,
-    Array_i64,
-    Array_u64,
-    Array_f16,
-    Array_f32,
-    Array_f64,
-    Array_f16be,
-    Array_f16le,
-    Array_c8,
-    Array_c16,
+	b8,
+	u8,
+	i8,
+	i16,
+	u16,
+	i32,
+	u32,
+	i64,
+	u64,
+	f16,
+	f32,
+	f64,
+	f16be,
+	f16le,
+	complex32,
+	complex64,
 }
 
-NumpySaveVersion :: struct {
-    maj: u8,
-    min: u8
-}
-
-Descriptor :: struct {
-    descr: string,
-    fortran_order: bool,
-    shape: []uint,
-    endianess: endian.Byte_Order,
-}
 
 NumpyHeader :: struct #packed {
-    magic: string,
-    version: NumpySaveVersion,
-    header_length: u16le,
-    header: Descriptor,
+	magic: string,
+	version: [2]u8,
+	header_length: u16le,
+	descr: string,
+	fortran_order: bool,
+	shape: []uint,
+	endianess: endian.Byte_Order,
 }
 
 NDArray :: struct {
-    data : ArrayTypes,
-    size : uint,
-    length : uint
+	data : []ArrayTypes,
+	shape: []uint,
+	size : uint,
+	length : uint
 }
 
+// inspired by @AriaGhora, from https://github.com/ariaghora/anvil
 // Compute total size of an tensor by multiplying dimensions in shape
 shape_to_size :: #force_inline proc(shape: []uint) -> uint {
 	return math.prod(shape)
 }
 
-
 delete_ndarray :: proc(nd: ^NDArray) {
-    switch arr in nd.data {
-    case Array_b8:    delete(arr)
-    case Array_u8:    delete(arr)
-    case Array_i8:    delete(arr)
-    case Array_i16:   delete(arr)
-    case Array_u16:   delete(arr)
-    case Array_i32:   delete(arr)
-    case Array_u32:   delete(arr)
-    case Array_i64:   delete(arr)
-    case Array_u64:   delete(arr)
-    case Array_f16:   delete(arr)
-    case Array_f32:   delete(arr)
-    case Array_f64:   delete(arr)
-    case Array_f16be: delete(arr)
-    case Array_f16le: delete(arr)
-    case Array_c8: delete(arr)
-    case Array_c16: delete(arr)
-    }
+	delete(nd.data)
+	delete(nd.shape)
 }
 
 delete_header :: proc(h: ^NumpyHeader) {
-    delete (h.magic)
-    delete (h.header.shape)
-    delete (h.header.descr)
+	delete(h.magic)
+	delete(h.shape)
+	delete(h.descr)
 }
 
 load_npy :: proc(
