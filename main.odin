@@ -36,4 +36,6 @@ main :: proc() {
     fmt.printfln("\t size of  : %v", size_of(ndarray))
     fmt.printfln("\t length of: %v", ndarray.length)
 
+	return
+
 }

@@ -43,22 +43,20 @@ types = (
     "single",
     "double",
     "longdouble",
-    "csingle",
-    "cdouble",
-    "clongdouble",
     "float32",
     "float64",
-    "complex",
+    "csingle",
+    "complex64",
+    "cdouble",
+    "clongdouble",
+    "complex128",
 )
 
 
 def main() -> int:
     dtypes = {b: [getattr(np.dtype(b), x) for x in attrs] for b in types}
-    if not has_rich:
-        for t, a in dtypes.items():
-            print(t, a)
-    else:
-        print(dtypes)
+    for t, a in dtypes.items():
+        print(f"\"{a[2][0][-1][1:]}\" = {a[0]}, // {t}, {a[1], a[-1]}")
     return 0
 
 
