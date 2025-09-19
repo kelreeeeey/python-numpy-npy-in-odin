@@ -281,17 +281,8 @@ recreate_array :: proc(
 	raw_bytes_pos       : int  // if alignment > 1
 
 	// make array
-	raw_bytes_container := make([]u8, alignment * n_elem, allocator=allocator, loc=loc)
+	raw_bytes_container := make([]u8, n_elem, allocator=allocator, loc=loc)
 	raw_bytes_pos, read_bytes_err = bufio.reader_read(reader, raw_bytes_container[:])
-
-	// #no_bounds_check for ; i < n_elem; i += alignment {
-	//    switch np_header.descr[1:] {
-	// 	case "b1" :
-	// 		ndarray.data[count] = cast(b8)raw_bytes_container[i]
-	// 	}
-	// 	case 
-	//
-	// }
 
     switch np_header.descr[1:] {
 	case "b1" :
@@ -528,8 +519,6 @@ parse_npy_header :: proc(
 			count += 1
         }
 		h.shape = h.shape[:count]
-
     }
-
     return nil
 }
