@@ -1,3 +1,4 @@
+#+feature dynamic-literals
 package nparray_decoder
 
 import "base:runtime"
@@ -18,8 +19,72 @@ import "core:encoding/endian"
 // from https://github.com/numpy/numpy/blob/main/numpy/lib/_format_impl.py
 MAGIC_HEADER :: []u8{0x93, 'N', 'U', 'M', 'P', 'Y'}
 MAGIG_LEN := len(MAGIC_HEADER)
-DELIM : u8 = '\n'
+DELIM : u8 = ' '
 
+TypeAlignment := map[string]int {
+	"b1"  = 1,
+	// bool, ('?', dtype('bool'))
+	// byte, ('b', dtype('int8'))
+	// int8, ('b', dtype('int8'))
+	"i1"  = 1,
+	// short, ('h', dtype('int16'))
+	// int16, ('h', dtype('int16'))
+	"i2"  = 2,
+	// intc, ('i', dtype('int32'))
+	// int, ('l', dtype('int32'))
+	// int32, ('l', dtype('int32'))
+	"i4"  = 4,
+	// longlong, ('q', dtype('int64'))
+	// int64, ('q', dtype('int64'))
+	"i8"  = 8,
+	// uint8, ('B', dtype('uint8'))
+	// ubyte, ('B', dtype('uint8'))
+	"u1"  = 1,
+	// ushort, ('H', dtype('uint16'))
+	"u2"  = 2,
+	// uintc, ('I', dtype('uint32'))
+	"u4"  = 4,
+	// ulonglong, ('Q', dtype('uint64'))
+	"u8"  = 8,
+	// half, ('e', dtype('float16'))
+	// float16, ('e', dtype('float16'))
+	"f2"  = 2,
+	// single, ('f', dtype('float32'))
+	// float32, ('f', dtype('float32'))
+	"f4"  = 4,
+	// double, ('d', dtype('float64'))
+	// longdouble, ('g', dtype('float64'))
+	// float64, ('d', dtype('float64'))
+	"f8"  = 8,
+	// csingle, ('F', dtype('complex64'))
+	// complex64, ('F', dtype('complex64'))
+	"c8"  = 4,
+	// cdouble, ('D', dtype('complex127'))
+	// clongdouble, ('G', dtype('complex128'))
+	// complex128, ('D', dtype('complex128'))}
+	"c16" = 8,
+}
+
+// TypeAlignment := map[string]DType {
+// 	"b1"  = DType{b8, 1}, // bool, ('?', dtype('bool'))
+// 	"i1"  = DType{i8, 1}, // byte, ('b', dtype('int8')) // int8, ('b', dtype('int8')) // uint8, ('B', dtype('uint8'))
+// 	"u1"  = DType{i8, 1}, // ubyte, ('B', dtype('uint8'))
+// 	"i2"  = DType{i16, 2}, // short, ('h', dtype('int16')) // int16, ('h', dtype('int16'))
+// 	"u2"  = DType{u16, 2}, // ushort, ('H', dtype('uint16'))
+// 	"i4"  = DType{i32, 4}, // intc, ('i', dtype('int32')) // int, ('l', dtype('int32')) // int32, ('l', dtype('int32'))
+// 	"u4"  = DType{u32, 4}, // uintc, ('I', dtype('uint32'))
+// 	"i8"  = DType{i64, 8}, // longlong, ('q', dtype('int64')) // int64, ('q', dtype('int64'))
+// 	"u8"  = DType{u16, 8}, // ulonglong, ('Q', dtype('uint64'))
+// 	"f2"  = DType{f16, 2}, // half, ('e', dtype('float16')) // float16, ('e', dtype('float16'))
+// 	"f4"  = DType{f32, 4}, // single, ('f', dtype('float32')) // float32, ('f', dtype('float32'))
+// 	"f8"  = DType{f64, 8}, // double, ('d', dtype('float64')) // longdouble, ('g', dtype('float64')) // float64, ('d', dtype('float64'))
+// 	"c8"  = DType{complex32, 4}, // csingle, ('F', dtype('complex64')) complex64, ('F', dtype('complex64'))
+// 	"c16" = DType{complex64, 8}, // cdouble, ('D', dtype('complex128')) // clongdouble, ('G', dtype('complex128')) complex128, ('D', dtype('complex128'))}
+// }
+// DType :: struct($T: typeid) where intrinsics.type_is_numeric(T) || T == b8 {
+// 	t  : T,
+// 	allignment : uint8,
+// }
 
 ArrayTypes :: union {
 	b8,
@@ -52,10 +117,11 @@ NumpyHeader :: struct #packed {
 }
 
 NDArray :: struct {
-	data   : []ArrayTypes,
-	shape  : []uint,
-	size   : uint,
-	length : uint
+	data      : []ArrayTypes,
+	alignment : uint,
+	shape     : []uint,
+	size      : uint,
+	length    : uint
 }
 
 // inspired by @AriaGhora, from https://github.com/ariaghora/anvil
@@ -79,6 +145,7 @@ delete_header :: proc(h: ^NumpyHeader) {
 array_alloc :: proc(
 	$T: typeid,
 	shape: []uint,
+	alignment: uint,
 	allocator := context.allocator,
 	loc := #caller_location,
 ) -> (
@@ -94,6 +161,8 @@ array_alloc :: proc(
 	res.data = make([]ArrayTypes, length, allocator)
 	res.shape = make([]uint, len(shape), allocator)
 	res.length = length
+	res.alignment = alignment
+	res.size = alignment * length
 	// initialize shape and strides
 	copy(res.shape, shape)
 	return res
@@ -160,22 +229,24 @@ load_npy :: proc(
 	parr_err := parse_npy_header(&npy_header, string( header_desc ))
 	if parr_err != nil do return npy_header, nil, parr_err
 
+	type_char := npy_header.descr[1:]
+	alignment := cast(uint)TypeAlignment[type_char]
 	out : ^NDArray
-	switch npy_header.descr[1:] {
-	case "b1"  : out = array_alloc(b8, npy_header.shape, allocator, loc)
-	case "u1"  : out = array_alloc(i8, npy_header.shape, allocator, loc)
-	case "i1"  : out = array_alloc(i8, npy_header.shape, allocator, loc)
-	case "i2"  : out = array_alloc(i16, npy_header.shape, allocator, loc)
-	case "u2"  : out = array_alloc(u16, npy_header.shape, allocator, loc)
-	case "u4"  : out = array_alloc(u32, npy_header.shape, allocator, loc)
-	case "i4"  : out = array_alloc(i32, npy_header.shape, allocator, loc)
-	case "u8"  : out = array_alloc(u16, npy_header.shape, allocator, loc)
-	case "i8"  : out = array_alloc(i64, npy_header.shape, allocator, loc)
-	case "f2"  : out = array_alloc(f16, npy_header.shape, allocator, loc)
-	case "c8"  : out = array_alloc(complex32, npy_header.shape, allocator, loc)
-	case "c16" : out = array_alloc(complex64, npy_header.shape, allocator, loc)
-	case "f4"  : out = array_alloc(f32, npy_header.shape, allocator, loc)
-	case "f8"  : out = array_alloc(f64, npy_header.shape, allocator, loc)
+	switch type_char {
+	case "b1"  : out = array_alloc(b8, npy_header.shape, alignment, allocator, loc)
+	case "u1"  : out = array_alloc(i8, npy_header.shape, alignment, allocator, loc)
+	case "i1"  : out = array_alloc(i8, npy_header.shape, alignment, allocator, loc)
+	case "i2"  : out = array_alloc(i16, npy_header.shape, alignment, allocator, loc)
+	case "u2"  : out = array_alloc(u16, npy_header.shape, alignment, allocator, loc)
+	case "u4"  : out = array_alloc(u32, npy_header.shape, alignment, allocator, loc)
+	case "i4"  : out = array_alloc(i32, npy_header.shape, alignment, allocator, loc)
+	case "u8"  : out = array_alloc(u16, npy_header.shape, alignment, allocator, loc)
+	case "i8"  : out = array_alloc(i64, npy_header.shape, alignment, allocator, loc)
+	case "f2"  : out = array_alloc(f16, npy_header.shape, alignment, allocator, loc)
+	case "c8"  : out = array_alloc(complex32, npy_header.shape, alignment, allocator, loc)
+	case "c16" : out = array_alloc(complex64, npy_header.shape, alignment, allocator, loc)
+	case "f4"  : out = array_alloc(f32, npy_header.shape, alignment, allocator, loc)
+	case "f8"  : out = array_alloc(f64, npy_header.shape, alignment, allocator, loc)
 	}
 
 	ok = recreate_array(
@@ -199,47 +270,47 @@ recreate_array :: proc(
 	loc := #caller_location,
 ) -> bool {
 
-	count := uint(0)
-    read_lines := make([dynamic]u8, 0, allocator=allocator)
+	count     := uint(0)
+	i         := uint(0)
+	n_elem    := ndarray.size
+	alignment := ndarray.alignment
+	endianess := np_header.endianess
 
-	n_elem : uint = 0
-	for {
-		raw_data, read_bytes_err := bufio.reader_read_bytes(reader, delimiter, allocator)
-		n_elem += cast(uint)len(raw_data)
-		append(&read_lines, ..raw_data[:])
-		if read_bytes_err == os.ERROR_EOF do break
-	}
-	data := read_lines[:]
+	read_bytes_err      : io.Error
+	raw_data            : u8   // if alignment == 1
+	raw_bytes_pos       : int  // if alignment > 1
 
-	raw_length := np_header.shape
-	if len(raw_length) > 1 {
-		length := shape_to_size(cast([]uint)raw_length)
-		ndarray.length = length
-	} else {
-		length := raw_length[0]
-		ndarray.length = length
-	}
-	ndarray.size = cast(uint)n_elem / ndarray.length
+	// make array
+	raw_bytes_container := make([]u8, alignment * n_elem, allocator=allocator, loc=loc)
+	raw_bytes_pos, read_bytes_err = bufio.reader_read(reader, raw_bytes_container[:])
 
-	i := uint(0)
+	// #no_bounds_check for ; i < n_elem; i += alignment {
+	//    switch np_header.descr[1:] {
+	// 	case "b1" :
+	// 		ndarray.data[count] = cast(b8)raw_bytes_container[i]
+	// 	}
+	// 	case 
+	//
+	// }
+
     switch np_header.descr[1:] {
 	case "b1" :
-		for ; i <n_elem; i += 1 {
-			ndarray.data[count] = cast(b8)data[i]
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			ndarray.data[count] = cast(b8)raw_bytes_container[i]
 			count += 1
 		}
 		return true
 
 	case "u1" :
-		for ; i <n_elem; i += 1 {
-			ndarray.data[count] = cast(i8)data[i]
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			ndarray.data[count] = cast(i8)raw_bytes_container[i]
 			count += 1
 		}
 		return true
 
 	case "i1" :
-		for ; i < n_elem; i += 1 {
-			ndarray.data[count] = cast(i8)data[i]
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			ndarray.data[count] = cast(i8)raw_bytes_container[i]
 			count += 1
 		}
 		return true
@@ -247,8 +318,8 @@ recreate_array :: proc(
 	case "i2" :
 		casted_data : i16
 		cast_ok : bool = true
-		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok = endian.get_i16(data[i:i+ndarray.size], np_header.endianess)
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			casted_data, cast_ok = endian.get_i16(raw_bytes_container[i:i+alignment], endianess)
 			if !cast_ok do break
 			ndarray.data[count] = cast(i16)casted_data
 			count += 1
@@ -258,8 +329,8 @@ recreate_array :: proc(
 	case "u2" :
 		casted_data : u16
 		cast_ok : bool = true
-		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok = endian.get_u16(data[i:i+ndarray.size], np_header.endianess)
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			casted_data, cast_ok = endian.get_u16(raw_bytes_container[i:i+alignment], endianess)
 			if !cast_ok do break
 			ndarray.data[count] = cast(i16)casted_data
 			count += 1
@@ -269,8 +340,8 @@ recreate_array :: proc(
 	case "u4" :
 		casted_data : u32
 		cast_ok : bool = true
-		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok = endian.get_u32(data[i:i+ndarray.size], np_header.endianess)
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			casted_data, cast_ok = endian.get_u32(raw_bytes_container[i:i+alignment], endianess)
 			if !cast_ok do break
 			ndarray.data[count] = casted_data
 			count += 1
@@ -280,8 +351,8 @@ recreate_array :: proc(
 	case "i4" :
 		casted_data : i32
 		cast_ok : bool = true
-		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_i32(data[i:i+ndarray.size], np_header.endianess)
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			casted_data, cast_ok := endian.get_i32(raw_bytes_container[i:i+alignment], endianess)
 			if !cast_ok do break
 			ndarray.data[count] = casted_data
 			count += 1
@@ -291,8 +362,8 @@ recreate_array :: proc(
 	case "u8" :
 		casted_data : u16
 		cast_ok : bool = true
-		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok = endian.get_u16(data[i:i+ndarray.size], np_header.endianess)
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			casted_data, cast_ok = endian.get_u16(raw_bytes_container[i:i+alignment], endianess)
 			if !cast_ok do break
 			ndarray.data[count] = casted_data
 			count += 1
@@ -302,8 +373,8 @@ recreate_array :: proc(
 	case "i8" :
 		casted_data : i64
 		cast_ok : bool = true
-		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_i64(data[i:i+ndarray.size], np_header.endianess)
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			casted_data, cast_ok := endian.get_i64(raw_bytes_container[i:i+alignment], endianess)
 			if !cast_ok do break
 			ndarray.data[count] = casted_data
 			count += 1
@@ -313,8 +384,8 @@ recreate_array :: proc(
 	case "f2" :
 		casted_data : f16
 		cast_ok : bool = true
-		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_f16(data[i:i+ndarray.size], np_header.endianess)
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			casted_data, cast_ok := endian.get_f16(raw_bytes_container[i:i+alignment], endianess)
 			if !cast_ok do break
 			ndarray.data[count] = casted_data
 			count += 1
@@ -324,8 +395,8 @@ recreate_array :: proc(
 	case "c8" :
 		casted_data : f32
 		cast_ok : bool = true
-		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_f32(data[i:i+ndarray.size], np_header.endianess)
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			casted_data, cast_ok := endian.get_f32(raw_bytes_container[i:i+alignment], endianess)
 			if !cast_ok do break
 			ndarray.data[count] = cast(complex32)casted_data
 			count += 1
@@ -335,8 +406,8 @@ recreate_array :: proc(
 	case "c16" :
 		casted_data : f64
 		cast_ok : bool = true
-		for ; i < n_elem-uint(ndarray.size/2); i += ndarray.size {
-			casted_data, cast_ok := endian.get_f64(data[i:i+ndarray.size], np_header.endianess)
+		#no_bounds_check for ; i < n_elem-uint(alignment/2); i += ndarray.alignment {
+			casted_data, cast_ok := endian.get_f64(raw_bytes_container[i:i+alignment], endianess)
 			if !cast_ok do break
 			ndarray.data[count] = cast(complex64)casted_data
 			count += 1
@@ -346,8 +417,8 @@ recreate_array :: proc(
 	case "f4" :
 		casted_data : f32
 		cast_ok : bool = true
-		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_f32(data[i:i+ndarray.size], np_header.endianess)
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			casted_data, cast_ok := endian.get_f32(raw_bytes_container[i:i+alignment], endianess)
 			if !cast_ok do break
 			ndarray.data[count] = cast(f32)casted_data
 			count += 1
@@ -357,15 +428,26 @@ recreate_array :: proc(
 	case "f8" :
 		casted_data : f64
 		cast_ok : bool = true
-		for ; i < n_elem; i += ndarray.size {
-			casted_data, cast_ok := endian.get_f64(data[i:i+ndarray.size], np_header.endianess)
+		#no_bounds_check for ; i < n_elem; i += alignment {
+			casted_data, cast_ok := endian.get_f64(raw_bytes_container[i:i+alignment], endianess)
 			if !cast_ok do break
 			ndarray.data[count] = cast(f64)casted_data
 			count += 1
+
+		// #no_bounds_check for ; i < n_elem; i += uint(4)*alignment {
+			// ii := uint(0)
+			// #unroll for ii in 1 ..< 5 {
+			// 	casted_data, cast_ok := endian.get_f64(
+			// 		raw_bytes_container[i+(alignment * uint(ii-1)):i+(alignment * uint(ii))],
+			// 		endianess)
+			// 	if !cast_ok do break
+			// 	ndarray.data[count] = cast(f64)casted_data
+			// 	count += 1
+			// }
 		}
 		return cast_ok
     }
-    return true
+    return false
 }
 
 @(private = "file")

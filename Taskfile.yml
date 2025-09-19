@@ -2,34 +2,39 @@
 
 version: '3'
 
-vars:
-    GREETING: Reading npy files in Odin
-
 tasks:
-    build:
-        cmds:
-        - odin build . -o:aggressive -out:./builds/python-numpy-npy-in-odin.exe -no-bounds-check
-        silent: true
-        generates:
-            - ./python-numpy-npy-in-odin.exe
+  build:
+    cmds:
+      - odin build . -o:aggressive -show-timings -no-bounds-check -out:./builds/python-numpy-npy-in-odin.exe
+    silent: true
+    generates:
+        - ./python-numpy-npy-in-odin.exe
 
-    npy:
-        deps:
-            - build
-        cmds:
-            - ./builds/python-numpy-npy-in-odin.exe {{.CLI_ARGS}}
-        silent: false
-        method: none
+  debug:
+    cmds:
+      - odin build . -o:aggressive -show-timings -no-bounds-check -debug -out:./builds/python-numpy-npy-in-odin.pdb
+    silent: true
+    generates:
+        - ./python-numpy-npy-in-odin.pdb
 
-    npy-ints:
-        aliases:
-          - int
-        deps:
-            - build
-        cmds:
-            - ./builds/python-numpy-npy-in-odin.exe ./test_data/ints/b_5.npy
-            - ./builds/python-numpy-npy-in-odin.exe ./test_data/ints/byte_5.npy
-            - ./builds/python-numpy-npy-in-odin.exe ./test_data/ints/int8_5.npy
-            - ./builds/python-numpy-npy-in-odin.exe ./test_data/ints/intc_5.npy
-        silent: false
-        method: none
+  npy:
+    cmds:
+      - ./builds/python-numpy-npy-in-odin.exe {{.CLI_ARGS}}
+    silent: false
+    method: none
+
+  npy-ints:
+    aliases:
+      - int
+    cmds:
+      - time bash ./scripts/test_all_ints.sh
+    silent: false
+    method: none
+
+  npy-floats:
+    aliases:
+      - flt
+    cmds:
+      - time bash ./scripts/test_all_floats.sh
+    silent: false
+    method: none
