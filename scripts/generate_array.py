@@ -147,6 +147,12 @@ def make_floats_arrays() -> None:
     float64_5x5     = np.array(list(float64 + x for x in range(5)))
     np.save("./test_data/floats/float64_5x5.npy", float64_5x5)
 
+    complex128 = np.arange(1, 6, 1).astype(np.complex128)
+    np.save("./test_data/floats/complex128_5.npy", complex128)
+
+    complex128_5x5 = np.array(list(complex128 + x for x in range(5)))
+    np.save("./test_data/floats/complex128_5x5.npy", complex128_5x5)
+
     return None
 
 def main() -> None:

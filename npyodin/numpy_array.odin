@@ -16,9 +16,10 @@ import "core:encoding/endian"
 
 
 // from https://github.com/numpy/numpy/blob/main/numpy/lib/_format_impl.py
-MAGIC :: []u8{0x93, 'N', 'U', 'M', 'P', 'Y'}
-MAGIG_LEN := len(MAGIC)
+MAGIC_HEADER :: []u8{0x93, 'N', 'U', 'M', 'P', 'Y'}
+MAGIG_LEN := len(MAGIC_HEADER)
 DELIM : u8 = '\n'
+
 
 ArrayTypes :: union {
 	b8,
@@ -41,19 +42,19 @@ ArrayTypes :: union {
 
 
 NumpyHeader :: struct #packed {
-	magic: string,
-	version: [2]u8,
-	header_length: u16le,
-	descr: string,
-	fortran_order: bool,
-	shape: []uint,
-	endianess: endian.Byte_Order,
+	magic         : string,
+	version       : [2]u8, // [major, minor]
+	header_length : u16le,
+	descr         : string,
+	fortran_order : bool,
+	shape         : []uint,
+	endianess     : endian.Byte_Order,
 }
 
 NDArray :: struct {
-	data : []ArrayTypes,
-	shape: []uint,
-	size : uint,
+	data   : []ArrayTypes,
+	shape  : []uint,
+	size   : uint,
 	length : uint
 }
 
@@ -131,7 +132,7 @@ load_npy :: proc(
 	// read magic magic
 	read, rerr := io.read(reader, magic[:], &MAGIG_LEN)
 	if rerr != nil || read != 6 do return npy_header, nil, InvalidHeaderError{"Invalid magic number"}
-	if !slice.equal(magic[:], MAGIC) do return npy_header, nil, InvalidHeaderError{"Invalid magic number"}
+	if !slice.equal(magic[:], MAGIC_HEADER) do return npy_header, nil, InvalidHeaderError{"Invalid magic number"}
 
 	clone_err : mem.Allocator_Error
 	npy_header.magic, clone_err = strings.clone_from_bytes(magic[:])
@@ -384,9 +385,9 @@ parse_npy_header :: proc(
 
 	// Enhanced descriptor parsing
 	if descr_start := strings.index(clean_header, "\"descr\":"); descr_start != -1 {
-		descr_start += 8
+		descr_start += 8 // exactly the length of ` "descr": `
 		descr_end := strings.index_byte(clean_header[descr_start:], ',')
-		if descr_end == -1 do return .Malformed_Header
+		if descr_end == -1 do return .NPY_Malformed_Header
 		descr_str := strings.trim(clean_header[descr_start:descr_start+descr_end], " \"")
 		// Handle native/byte-order-agnostic types
 		switch {
@@ -424,7 +425,7 @@ parse_npy_header :: proc(
 		shape_start += 8  // Skip `"shape": `
 		shape_end := strings.index_byte(clean_header[shape_start:], ']')
 
-		if shape_end == -1 do return .Shape_Parse_Failed
+		if shape_end == -1 do return .NPY_Shape_Parse_Failed
 
 		shape_str := clean_header[shape_start:shape_start+shape_end]
 		shape_str = strings.trim_space(shape_str)
@@ -440,7 +441,7 @@ parse_npy_header :: proc(
 			trimmed := strings.trim_space(part)
 			if trimmed == "" { continue }
 			value, ok := strconv.parse_int(trimmed)
-			if !ok do return .Shape_Parse_Failed
+			if !ok do return .NPY_Shape_Parse_Failed
 			h.shape[count] = cast(uint)value
 			count += 1
         }

@@ -51,10 +51,9 @@ InvalidHeaderLengthError :: struct {
 }
 
 ParseError :: enum {
-	None,
-	Invalid_Descriptor,
-	Malformed_Header,
-	Shape_Parse_Failed,
+	NPY_Invalid_Descriptor,
+	NPY_Malformed_Header,
+	NPY_Shape_Parse_Failed,
 }
 
 RecreateArrayError :: struct {

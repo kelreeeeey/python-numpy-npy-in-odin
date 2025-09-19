@@ -12,6 +12,7 @@ test_2d_arrays() {
   ./builds/python-numpy-npy-in-odin.exe ./test_data/floats/half_5x5.npy
   ./builds/python-numpy-npy-in-odin.exe ./test_data/floats/longdouble_5x5.npy
   ./builds/python-numpy-npy-in-odin.exe ./test_data/floats/single_5x5.npy
+  ./builds/python-numpy-npy-in-odin.exe ./test_data/floats/complex128_5x5.npy
 }
 
 test_1d_arrays() {
@@ -26,6 +27,7 @@ test_1d_arrays() {
   ./builds/python-numpy-npy-in-odin.exe ./test_data/floats/half_5.npy
   ./builds/python-numpy-npy-in-odin.exe ./test_data/floats/longdouble_5.npy
   ./builds/python-numpy-npy-in-odin.exe ./test_data/floats/single_5.npy
+  ./builds/python-numpy-npy-in-odin.exe ./test_data/floats/complex128_5.npy
 }
 
 test_2d_arrays
