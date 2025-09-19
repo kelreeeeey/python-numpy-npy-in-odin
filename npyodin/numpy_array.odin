@@ -1,4 +1,3 @@
-#+feature dynamic-literals
 package nparray_decoder
 
 import "base:runtime"
@@ -19,50 +18,54 @@ import "core:encoding/endian"
 // from https://github.com/numpy/numpy/blob/main/numpy/lib/_format_impl.py
 MAGIC_HEADER :: []u8{0x93, 'N', 'U', 'M', 'P', 'Y'}
 MAGIG_LEN := len(MAGIC_HEADER)
-DELIM : u8 = ' '
+NPY_BUFFER_READER_SIZE :: 1024
 
-TypeAlignment := map[string]int {
-	"b1"  = 1,
-	// bool, ('?', dtype('bool'))
-	// byte, ('b', dtype('int8'))
-	// int8, ('b', dtype('int8'))
-	"i1"  = 1,
-	// short, ('h', dtype('int16'))
-	// int16, ('h', dtype('int16'))
-	"i2"  = 2,
-	// intc, ('i', dtype('int32'))
-	// int, ('l', dtype('int32'))
-	// int32, ('l', dtype('int32'))
-	"i4"  = 4,
-	// longlong, ('q', dtype('int64'))
-	// int64, ('q', dtype('int64'))
-	"i8"  = 8,
-	// uint8, ('B', dtype('uint8'))
-	// ubyte, ('B', dtype('uint8'))
-	"u1"  = 1,
-	// ushort, ('H', dtype('uint16'))
-	"u2"  = 2,
-	// uintc, ('I', dtype('uint32'))
-	"u4"  = 4,
-	// ulonglong, ('Q', dtype('uint64'))
-	"u8"  = 8,
-	// half, ('e', dtype('float16'))
-	// float16, ('e', dtype('float16'))
-	"f2"  = 2,
-	// single, ('f', dtype('float32'))
-	// float32, ('f', dtype('float32'))
-	"f4"  = 4,
-	// double, ('d', dtype('float64'))
-	// longdouble, ('g', dtype('float64'))
-	// float64, ('d', dtype('float64'))
-	"f8"  = 8,
-	// csingle, ('F', dtype('complex64'))
-	// complex64, ('F', dtype('complex64'))
-	"c8"  = 4,
-	// cdouble, ('D', dtype('complex127'))
-	// clongdouble, ('G', dtype('complex128'))
-	// complex128, ('D', dtype('complex128'))}
-	"c16" = 8,
+@(private = "file")
+get_alignment :: proc(np_type_char: string) -> uint {
+	alignment : uint
+	switch np_type_char {
+		// bool, ('?', dtype('bool'))
+		// byte, ('b', dtype('int8'))
+		// int8, ('b', dtype('int8'))
+		case "i1" : alignment = 1
+		// short, ('h', dtype('int16'))
+		// int16, ('h', dtype('int16'))
+		case "i2" : alignment = 2
+		// intc, ('i', dtype('int32'))
+		// int, ('l', dtype('int32'))
+		// int32, ('l', dtype('int32'))
+		case "i4" : alignment = 4
+		// longlong, ('q', dtype('int64'))
+		// int64, ('q', dtype('int64'))
+		case "i8" : alignment = 8
+		// uint8, ('B', dtype('uint8'))
+		// ubyte, ('B', dtype('uint8'))
+		case "u1" : alignment = 1
+		// ushort, ('H', dtype('uint16'))
+		case "u2" : alignment = 2
+		// uintc, ('I', dtype('uint32'))
+		case "u4" : alignment = 4
+		// ulonglong, ('Q', dtype('uint64'))
+		case "u8" : alignment = 8
+		// half, ('e', dtype('float16'))
+		// float16, ('e', dtype('float16'))
+		case "f2" : alignment = 2
+		// single, ('f', dtype('float32'))
+		// float32, ('f', dtype('float32'))
+		case "f4" : alignment = 4
+		// double, ('d', dtype('float64'))
+		// longdouble, ('g', dtype('float64'))
+		// float64, ('d', dtype('float64'))
+		case "f8" : alignment = 8
+		// csingle, ('F', dtype('complex64'))
+		// complex64, ('F', dtype('complex64'))
+		case "c8" : alignment = 4
+		// cdouble, ('D', dtype('complex127'))
+		// clongdouble, ('G', dtype('complex128'))
+		// complex128, ('D', dtype('complex128'))
+		case "c16": alignment = 8
+	}
+	return alignment
 }
 
 // TypeAlignment := map[string]DType {
@@ -170,8 +173,7 @@ array_alloc :: proc(
 
 load_npy :: proc(
 	file_name: string,
-	bufreader_size: int = 1024,
-	delimiter: u8 = DELIM,
+	bufreader_size: int = NPY_BUFFER_READER_SIZE,
 	allocator:= context.allocator,
 	loc := #caller_location,
 ) -> (
@@ -230,7 +232,7 @@ load_npy :: proc(
 	if parr_err != nil do return npy_header, nil, parr_err
 
 	type_char := npy_header.descr[1:]
-	alignment := cast(uint)TypeAlignment[type_char]
+	alignment := get_alignment(type_char)
 	out : ^NDArray
 	switch type_char {
 	case "b1"  : out = array_alloc(b8, npy_header.shape, alignment, allocator, loc)
@@ -253,7 +255,6 @@ load_npy :: proc(
 		&npy_header,
 		&bufio_reader,
 		out,
-		delimiter = delimiter,
 		allocator = allocator
 	)
 	if !ok do return npy_header, nil, RecreateArrayError{"Cannot parse data array, possible curropted data type is not supported yet"}
@@ -265,7 +266,6 @@ recreate_array :: proc(
 	np_header: ^NumpyHeader,
 	reader: ^bufio.Reader,
 	ndarray : ^NDArray,
-	delimiter: u8 = DELIM,
 	allocator := context.allocator,
 	loc := #caller_location,
 ) -> bool {
@@ -282,6 +282,7 @@ recreate_array :: proc(
 
 	// make array
 	raw_bytes_container := make([]u8, n_elem, allocator=allocator, loc=loc)
+	// defer delete(raw_bytes_container)
 	raw_bytes_pos, read_bytes_err = bufio.reader_read(reader, raw_bytes_container[:])
 
     switch np_header.descr[1:] {
@@ -435,6 +436,7 @@ recreate_array :: proc(
 			// 	ndarray.data[count] = cast(f64)casted_data
 			// 	count += 1
 			// }
+
 		}
 		return cast_ok
     }

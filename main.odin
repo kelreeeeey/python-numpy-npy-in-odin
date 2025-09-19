@@ -32,7 +32,7 @@ main :: proc() {
     fmt.println("\tData")
     fmt.printfln("\t data: %v", ndarray.data[:5])
     fmt.printfln("\t size: %v", ndarray.size)
-    fmt.printfln("\t len : %v", ndarray.length)
+    fmt.printfln("\t len : %v, %v", ndarray.length, typeid_of(type_of(f32(64))))
     fmt.printfln("\t size of  : %v", size_of(ndarray))
     fmt.printfln("\t length of: %v", ndarray.length)
 
